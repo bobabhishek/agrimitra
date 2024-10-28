@@ -66,34 +66,37 @@ def recommandation():
             data["K"],
         ]
 
-        # print("State : ",encoders["State"].transform([data["State"]]))
-
         input_array = np.array(input_data,dtype=np.float32).reshape(1, -1)
         print(encoders["label"].transform(["rice"])[0])
         print(encoders["label"].inverse_transform([17])[0])
         prediction = crop_model.predict(input_array)
         prediction = prediction.tolist()
-        label_no = np.argmax(prediction)
-        print(prediction)
-        label_name = encoders["label"].inverse_transform([label_no])[0]
 
-        price_input = input_data
-        price_input.append(label_no)
-        price_input = np.array(price_input,dtype=np.float32).reshape(1, -1)
-        price = price_model.predict(price_input)
+        # Get top 3 predictions
+        top_3_indices = np.argsort(prediction[0])[-4:-1][::-1]
+        results = []
 
-        price = price.tolist()[0]
+        for idx in top_3_indices:
+            label_name = encoders["label"].inverse_transform([idx])[0]
+
+            # Calculate price for each crop
+            price_input = input_data.copy()
+            price_input.append(idx)
+            price_input = np.array(price_input, dtype=np.float32).reshape(1, -1)
+            price = price_model.predict(price_input).tolist()[0]
+
+            results.append(
+                {"crop": label_name, "confidence": prediction[0][idx], "price": price}
+            )
 
         return {
-            "data" : np.array(input_data).tolist(),
-            "label": label_name,
-            "price": price,
+            "data": np.array(input_data).tolist(),
+            "predictions": results,
             "raw_prediction": {
-                "crop" : prediction,
-                "price" : price
-            }
+                "crop": prediction,
+                "prices": [result["price"] for result in results],
+            },
         }
-
     else:
         return {"error": "No data found"}
 
