@@ -1,0 +1,5 @@
+__pycache__
+*.pkl
+crop_disease-VGG19-10_epoch
+crop_predictor-100
+price_predictor-100
